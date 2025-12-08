@@ -1,0 +1,11 @@
+
+
+
+
+User  <--->  Chat  <--->  Message
+              ^
+              |
+            Group
+
+
+User  <--->  Status
