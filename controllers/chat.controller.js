@@ -1,6 +1,7 @@
 import { Chat } from "../models/chat.model.js";
 import { User } from "../models/user.model.js";
 
+//  Create Chat
 export const createChat = async (req, res) => {
   try {
     const { id } = req.user;
@@ -31,7 +32,7 @@ export const createChat = async (req, res) => {
 
     const existingChat = await Chat.findOne({
       isGroup: false,
-      participants: { $all: [otherUser._id, id] },
+      participants: { $all: [otherUser._id, id] }, // covers all the id's in the query
     });
 
     if (existingChat) {
@@ -54,6 +55,70 @@ export const createChat = async (req, res) => {
     return res.status(201).json({
       message: "Chat created successfully",
       chat: fullChatDetails,
+    });
+  } catch (error) {
+    console.error("Internal Server Error");
+    return res.status(500).json({ error });
+  }
+};
+
+// Get My Chats
+export const myChats = async (req, res) => {
+  try {
+    const { id } = req.user;
+
+    const chats = await Chat.find({
+      participants: id,
+    })
+      .populate("participants", "name about profileImage phone")
+      .populate("lastMessage")
+      // .populate({
+      //   path: "lastMessage",
+      //   populate: { path: "senderId", select: "name profileImage" },
+      // })
+
+      .sort({ updatedAt: -1 });
+
+    console.log(chats);
+
+    return res.status(200).json({ message: "Fetched Successfully", chats });
+  } catch (error) {
+    console.error("Internal Server Error");
+    return res.status(500).json({ error });
+  }
+};
+
+// Get Chat By Phone
+export const getChatByPhone = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { otherUserPhone } = req.params;
+
+    // Check existing User
+    const otherUser = await User.findOne({ phone: otherUserPhone });
+
+    if (!otherUser) {
+      return res
+        .status(404)
+        .json({ message: "User not found with this phone number" });
+    }
+
+    //  Check existing chat
+
+    const chat = await Chat.findOne({
+      isGroup: false,
+      participants: { $all: [id, otherUser._id] },
+    })
+      .populate("participants", "name about profileImage phone")
+      .populate("lastMessage");
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    return res.status(200).json({
+      message: "Chat fetched sucessfully",
+      chat,
     });
   } catch (error) {
     console.error("Internal Server Error");
