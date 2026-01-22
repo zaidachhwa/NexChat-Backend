@@ -49,7 +49,7 @@ export const createChat = async (req, res) => {
 
     const fullChatDetails = await Chat.findById(chat._id).populate(
       "participants",
-      "name about profileImage phone"
+      "name about profileImage phone",
     );
 
     return res.status(201).json({
@@ -79,9 +79,24 @@ export const myChats = async (req, res) => {
 
       .sort({ updatedAt: -1 });
 
-    console.log(chats);
+    // Exclude your id from the participants
+    const formattedChats = chats.map((chat) => {
+      const otherUser = chat.participants.find(
+        (p) => p._id.toString() !== id.toString(),
+      );
 
-    return res.status(200).json({ message: "Fetched Successfully", chats });
+      return {
+        _id: chat._id,
+        isGroup: chat.isGroup,
+        otherUser,
+        lastMessage: chat.lastMessage,
+        updatedAt: chat.updatedAt,
+      };
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Fetched Successfully", chats: formattedChats });
   } catch (error) {
     console.error("Internal Server Error");
     return res.status(500).json({ error });
