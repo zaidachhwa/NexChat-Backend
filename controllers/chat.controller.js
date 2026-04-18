@@ -96,8 +96,9 @@ export const myChats = async (req, res) => {
 
     return res
       .status(200)
-      .json({ message: "Fetched Successfully", chats: formattedChats });
+      .json({ message: "Fetched Successfully", chats: formattedChats, chats });
   } catch (error) {
+    console.log(error);
     console.error("Internal Server Error");
     return res.status(500).json({ error });
   }
